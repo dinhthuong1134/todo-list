@@ -3,26 +3,28 @@ import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
 
-const server = express() as any;
+// Tạo biến global để cache instance của NestJS
+let cachedServer: any;
 
 async function bootstrap() {
-  const app = await NestFactory.create(
-    AppModule,
-    new ExpressAdapter(server),
-  );
+  if (!cachedServer) {
+    const server = express();
+    const app = await NestFactory.create(
+      AppModule,
+      new ExpressAdapter(server),
+    );
 
-  app.enableCors();
-
-  // await app.listen(3000);
-  await app.init();
-  return app.getHttpAdapter().getInstance();
+    app.enableCors();
+    await app.init();
+    
+    // Lưu instance vào cache để dùng cho lần sau
+    cachedServer = server;
+  }
+  return cachedServer;
 }
 
-bootstrap();
-
-// export default server;
-
+// Export duy nhất một function cho Vercel
 export default async (req: any, res: any) => {
   const instance = await bootstrap();
-  instance(req, res);
+  return instance(req, res);
 };
