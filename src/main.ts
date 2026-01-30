@@ -4,18 +4,26 @@ import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
 
 const server = express() as any;
+let isInitialized = false;
 
 async function bootstrap() {
+  if (isInitialized) return;
+
   const app = await NestFactory.create(
     AppModule,
     new ExpressAdapter(server),
   );
 
   app.enableCors();
+  await app.init();
 
-  await app.init()
+  isInitialized = true;
 }
 
-bootstrap();
+// ⚠️ intercept mọi request
+server.use(async (req, res, next) => {
+  await bootstrap();
+  next();
+});
 
 export default server;
