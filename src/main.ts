@@ -13,9 +13,16 @@ async function bootstrap() {
 
   app.enableCors();
 
-  await app.listen(3000);
+  // await app.listen(3000);
+  await app.init();
+  return app.getHttpAdapter().getInstance();
 }
 
 bootstrap();
 
-export default server;
+// export default server;
+
+export default async (req: any, res: any) => {
+  const instance = await bootstrap();
+  instance(req, res);
+};
